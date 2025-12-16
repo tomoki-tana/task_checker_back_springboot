@@ -15,10 +15,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import in.tech_camp.task_checker_back.dto.UpdateStatusDTO;
 import in.tech_camp.task_checker_back.entity.TaskEntity;
 import in.tech_camp.task_checker_back.repository.TaskRepository;
 import lombok.AllArgsConstructor;
+
 
 @RestController
 @RequestMapping("/api/tasks")
@@ -26,82 +26,61 @@ import lombok.AllArgsConstructor;
 public class TaskController {
 
   private final TaskRepository taskRepository;
-
+  
+  /**
+   * タスク一覧取得
+   * @return タスク一覧
+   */
   @GetMapping("/")
-  public List<TaskEntity> showIndex() {
-    List<TaskEntity> tasks = taskRepository.findAll();
-    return tasks;
+  public List<TaskEntity> getTasks() {
+    return taskRepository.findAll();
   }
-
+  
+  /**
+   * タスク登録処理
+   * @param taskEntity
+   * @return タスク一覧
+   */
   @PostMapping("/")
-  public ResponseEntity<?> createTask(@RequestBody TaskEntity task) {
+  public ResponseEntity<?> createTask(@RequestBody TaskEntity taskEntity) {
     try {
-      taskRepository.insert(task);
+      taskRepository.insert(taskEntity);
+      List<TaskEntity> response = taskRepository.findAll();
+      return ResponseEntity.ok().body(response);
     } catch (Exception e) {
-      System.out.println("エラー：" + e);
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("messages", List.of("Internal Server Error")));
+      e.printStackTrace();
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("messages", List.of("unsuccess to create task")));
     }
-    List<TaskEntity> tasks = taskRepository.findAll();
-    return ResponseEntity.ok().body(tasks);
   }
 
   @PutMapping("/{taskId}/update")
-  public ResponseEntity<?> updateTask(@PathVariable("taskId") Integer id, @RequestBody TaskEntity task) {
-
-    TaskEntity existingTask = taskRepository.findById(task.getId());
-    if(existingTask == null){
+  public ResponseEntity<?> updateTask(@PathVariable("taskId") Integer id, @RequestBody TaskEntity taskEntity) {
+    boolean isExistTask = taskRepository.isExistTask(id);
+    if (!isExistTask) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("messages", List.of("Task not found")));
     }
-
-    existingTask.setName(task.getName());
-    existingTask.setExplanation(task.getExplanation());
-    existingTask.setDeadlineDate(task.getDeadlineDate());
-    existingTask.setStatus(task.getStatus());
-    existingTask.setGenreId(task.getGenreId());
-    existingTask.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
-
     try {
-      taskRepository.update(existingTask);
+      taskEntity.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
+      taskRepository.update(taskEntity);
+      List<TaskEntity> response = taskRepository.findAll();
+      return ResponseEntity.ok().body(response);
     } catch (Exception e) {
-      System.out.println("エラー：" + e);
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("messages", List.of("Internal Server Error")));
+      e.printStackTrace();
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("messages", List.of("unsuccess to update task")));
     }
-
-    List<TaskEntity> tasks = taskRepository.findAll();
-
-    return ResponseEntity.ok().body(tasks);
   }
 
   @DeleteMapping("/{taskId}/delete")
-  public ResponseEntity<?> deleteGenre(@PathVariable("taskId") Integer taskId) {
+  public  ResponseEntity<?> deleteTask(@PathVariable("taskId") Integer id) {
+    boolean isExistTask = taskRepository.isExistTask(id);
+    if (id == null || !isExistTask) return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("messages", List.of("削除対象のタスクがありません")));
     try {
-      taskRepository.deleteById(taskId);
-      List<TaskEntity> tasks = taskRepository.findAll();
-      return ResponseEntity.ok().body(tasks);
+      taskRepository.delete(id);
+      List<TaskEntity> response = taskRepository.findAll();
+      return ResponseEntity.ok().body(response);
     } catch (Exception e) {
-      System.out.println("エラー：" + e);
-      return ResponseEntity.internalServerError().body(Map.of("messages", List.of("Internal Server Error")));
+      e.printStackTrace();
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("messages", List.of("unsuccess to delete task")));
     }
-  }
-
-  @PostMapping("/{taskId}/update/status")
-  public ResponseEntity<?> updateStatus(@PathVariable("taskId") Integer taskId, @RequestBody UpdateStatusDTO statusRequest) {
-
-    TaskEntity task = taskRepository.findById(taskId);
-    if(task == null){
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("messages", List.of("Task not found")));
-    }
-
-    task.setStatus(statusRequest.getStatus());
-    task.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
-    try {
-      taskRepository.update(task);
-    } catch (Exception e) {
-      System.out.println("エラー：" + e);
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("messages", List.of("Internal Server Error")));
-    }
-    List<TaskEntity> tasks = taskRepository.findAll();
-
-    return ResponseEntity.ok().body(tasks);
   }
 }

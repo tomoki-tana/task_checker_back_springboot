@@ -12,14 +12,13 @@ import in.tech_camp.task_checker_back.entity.GenreEntity;
 
 @Mapper
 public interface GenreRepository {
-
   @Select("SELECT * FROM genres")
-  List<GenreEntity> findAll();
+  List<GenreEntity>findAll();
 
   @Insert("INSERT INTO genres (name) VALUES (#{name})")
-  @Options(useGeneratedKeys = true, keyProperty = "id")
-  void insert(GenreEntity genre);
+  @Options(useGeneratedKeys=true, keyProperty="id")
+  void insert(GenreEntity entity);
 
   @Delete("DELETE FROM genres WHERE id = #{id}")
-  void deleteById(Integer id);
+  void delete(GenreEntity entity);
 }
