@@ -15,7 +15,7 @@ public class CorsConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 // タスクAPI設定
                 registry.addMapping("/api/tasks/**")
-                .allowedOrigins("http://localhost:3000")
+                .allowedOrigins("https://task-checker-front-nextjs-46886.onrender.com")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*");
 
